@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalLab — Procesamiento de Señales Digitales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+<style>
+/* ─── VARIABLES ───────────────────────────────────── */
+:root {
+  --bg-page:    #F7F8FA;
+  --bg-panel:   #FFFFFF;
+  --bg-dark:    #0D1117;
+  --bg-code:    #F0F2F5;
+  --border:     #DEE2E8;
+  --border-med: #C8CDD6;
+  --text-h:     #0D1117;
+  --text-b:     #2C3242;
+  --text-m:     #5A6478;
+  --text-l:     #8E97A8;
+  --accent:     #1A56C4;
+  --accent-bg:  #EBF0FB;
+  --accent2:    #0E7C5A;
+  --accent2-bg: #E8F5F0;
+  --warn:       #B45309;
+  --warn-bg:    #FFF7ED;
+  --danger:     #B91C1C;
+  --danger-bg:  #FEF2F2;
+  --mono:       'JetBrains Mono', 'Consolas', monospace;
+  --sans:       'Inter', sans-serif;
+  --serif:      'Noto Serif', Georgia, serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-page);
+  color: var(--text-b);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+.app-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 52px 1fr;
+  min-height: 100vh;
+}
+
+/* ─── TOP BAR ────────────────────────────────────── */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  gap: 1rem;
+  border-bottom: 1px solid #1E2535;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #F1F5F9;
+  letter-spacing: -0.01em;
+}
+
+.topbar-brand .accent { color: #60A5FA; }
+
+.topbar-sep {
+  width: 1px; height: 18px;
+  background: #2D3748;
+}
+
+.topbar-sub {
+  font-size: 0.75rem;
+  color: #64748B;
+  font-family: var(--mono);
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.topbar-badge {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: #94A3B8;
+  border: 1px solid #2D3748;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────── */
+.sidebar {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding-top: 0;
+}
+
+.sidebar-section {
+  padding: 1.25rem 0 0.5rem;
+}
+
+.sidebar-section-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-l);
+  padding: 0 1.25rem;
+  margin-bottom: 0.35rem;
+  font-family: var(--mono);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1.25rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-m);
+  border-left: 2px solid transparent;
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background: var(--bg-page);
+  color: var(--text-b);
+}
+
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-bg);
+  font-weight: 500;
+}
+
+.nav-icon {
+  width: 15px; height: 15px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.nav-item.active .nav-icon { opacity: 1; }
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.75rem 1.25rem;
+}
+
+/* ─── MAIN ───────────────────────────────────────── */
+.main {
+  overflow-y: auto;
+  background: var(--bg-page);
+  padding: 2rem;
+}
+
+/* ─── TAB PANELS ─────────────────────────────────── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ─── PAGE HEADER ────────────────────────────────── */
+.page-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-h);
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-m);
+  margin-top: 0.25rem;
+}
+
+.page-tags {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.tag-blue { color: var(--accent); border-color: #BFCFEF; background: var(--accent-bg); }
+.tag-green { color: var(--accent2); border-color: #A7D5C6; background: var(--accent2-bg); }
+.tag-gray { color: var(--text-m); border-color: var(--border-med); background: var(--bg-code); }
+
+/* ─── GRID LAYOUTS ───────────────────────────────── */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+
+/* ─── PANELS ─────────────────────────────────────── */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.panel-header {
+  background: var(--bg-code);
+  border-bottom: 1px solid var(--border);
+  padding: 0.55rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-h);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-family: var(--mono);
+}
+
+.panel-title-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.panel-body { padding: 1rem; }
+
+/* ─── CONTROLS ───────────────────────────────────── */
+.control-group {
+  margin-bottom: 0.85rem;
+}
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.3rem;
+}
+
+.control-label-text {
+  font-size: 0.78rem;
+  color: var(--text-m);
+  font-weight: 500;
+}
+
+.control-value {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+select, input[type="number"] {
+  width: 100%;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-b);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  outline: none;
+  cursor: pointer;
+}
+
+select:focus, input[type="number"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(26,86,196,0.12);
+}
+
+input[type="number"] { cursor: text; }
+
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.btn {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.15s;
+  font-family: var(--sans);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover { background: #1344A0; }
+
+.btn-secondary {
+  background: var(--bg-panel);
+  color: var(--text-b);
+  border-color: var(--border-med);
+}
+
+.btn-secondary:hover { background: var(--bg-page); }
+
+/* ─── CHART CONTAINERS ───────────────────────────── */
+.chart-container {
+  position: relative;
+  background: var(--bg-panel);
+}
+
+.chart-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-l);
+  margin-bottom: 0.3rem;
+}
+
+canvas {
+  display: block;
+  width: 100% !important;
+}
+
+/* ─── EQUATIONS ──────────────────────────────────── */
+.eq-block {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.eq-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-l);
+  font-family: var(--mono);
+  margin-bottom: 0.5rem;
+}
+
+.eq-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.eq-item { flex: 1; min-width: 200px; }
+
+.eq-name {
+  font-size: 0.72rem;
+  color: var(--text-m);
+  margin-bottom: 0.25rem;
+  font-family: var(--mono);
+}
+
+.eq-katex {
+  font-size: 0.92rem;
+}
+
+/* ─── METRICS ────────────────────────────────────── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.metric-card {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.6rem 0.75rem;
+}
+
+.metric-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-l);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.metric-value {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.metric-value.accent { color: var(--accent); }
+.metric-value.green { color: var(--accent2); }
+.metric-value.warn { color: var(--warn); }
+.metric-value.danger { color: var(--danger); }
+
+/* ─── INFO / ALERT BOXES ─────────────────────────── */
+.info-box {
+  font-size: 0.78rem;
+  color: var(--text-m);
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  padding: 0.6rem 0.8rem;
+  line-height: 1.55;
+  margin-top: 0.5rem;
+}
+
+.info-box.warn {
+  border-left-color: var(--warn);
+  background: var(--warn-bg);
+  color: #92400E;
+}
+
+.info-box.ok {
+  border-left-color: var(--accent2);
+  background: var(--accent2-bg);
+  color: #065F46;
+}
+
+.info-box.danger {
+  border-left-color: var(--danger);
+  background: var(--danger-bg);
+  color: #991B1B;
+}
+
+/* ─── TABLE ──────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+
+.data-table th {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-m);
+  font-weight: 600;
+}
+
+.data-table td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.6rem;
+  color: var(--text-b);
+}
+
+.data-table tr:nth-child(even) td { background: var(--bg-code); }
+.data-table tr:hover td { background: var(--accent-bg); }
+
+.td-accent { color: var(--accent); font-weight: 500; }
+.td-green { color: var(--accent2); }
+
+/* ─── SUB-TABS ───────────────────────────────────── */
+.sub-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.sub-tab {
+  padding: 0.45rem 1.1rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--text-m);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+  font-weight: 500;
+  user-select: none;
+}
+
+.sub-tab:hover { color: var(--text-b); }
+
+.sub-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ─── LOADING ────────────────────────────────────── */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  font-size: 0.78rem;
+  color: var(--text-m);
+  font-family: var(--mono);
+  border-radius: 6px;
+  display: none;
+}
+
+/* ─── SECTION DIVIDER ────────────────────────────── */
+.section-div {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-l);
+  font-family: var(--mono);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  margin: 1.25rem 0 0.75rem;
+}
+
+/* ─── CHECKBOX TOGGLE ────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.toggle-row label {
+  font-size: 0.78rem;
+  color: var(--text-m);
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+/* ─── ANIMATION SLIDER ───────────────────────────── */
+.anim-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+  margin-top: 0.75rem;
+}
+
+.anim-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-m);
+  white-space: nowrap;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 960px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: flex; flex-wrap: wrap; overflow: visible; padding: 0; border-right: none; border-bottom: 1px solid var(--border); }
+  .sidebar-section-label, .sidebar-divider { display: none; }
+  .nav-item { border-left: none; border-bottom: 2px solid transparent; padding: 0.6rem 0.75rem; }
+  .nav-item.active { border-bottom-color: var(--accent); background: none; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .col-span-2, .col-span-3 { grid-column: span 1; }
+  .main { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      Signal<span class="accent">Lab</span>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-sub">Procesamiento Digital de Señales</div>
+    <div class="topbar-right">
+      <div class="topbar-badge">NumPy · SciPy · FastAPI</div>
+      <div class="topbar-badge">ESCOM · IPN</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Señales</div>
+      <div class="nav-item active" onclick="switchTab('signals')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M1 8 Q3 2, 5 8 Q7 14, 9 8 Q11 2, 13 8 Q14 11, 15 8"/>
+        </svg>
+        Generador de señales
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Fourier</div>
+      <div class="nav-item" onclick="switchTab('fourier-series')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M1 12 Q4 4, 7 8 Q10 12, 13 5 Q14 3, 15 4"/>
+          <line x1="1" y1="12" x2="15" y2="12" stroke-dasharray="2,2" opacity="0.4"/>
+        </svg>
+        Series de Fourier
+      </div>
+      <div class="nav-item" onclick="switchTab('dft')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="2" y="9" width="2" height="5" rx="1"/><rect x="6" y="5" width="2" height="9" rx="1"/>
+          <rect x="10" y="3" width="2" height="11" rx="1"/><rect x="13" y="7" width="2" height="7" rx="1"/>
+        </svg>
+        DFT / FFT
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Sistemas</div>
+      <div class="nav-item" onclick="switchTab('convolution')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="6" cy="8" r="3.5"/><circle cx="10" cy="8" r="3.5"/>
+          <line x1="6" y1="8" x2="10" y2="8" stroke-dasharray="2,2"/>
+        </svg>
+        Convolución
+      </div>
+      <div class="nav-item" onclick="switchTab('sampling')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M1 8 Q4 3, 7 8 Q10 13, 13 8" opacity="0.5"/>
+          <line x1="4" y1="4" x2="4" y2="12" stroke-dasharray="1,2"/>
+          <line x1="8" y1="4" x2="8" y2="12" stroke-dasharray="1,2"/>
+          <line x1="12" y1="4" x2="12" y2="12" stroke-dasharray="1,2"/>
+          <circle cx="4" cy="8" r="2" fill="currentColor" stroke="none"/>
+          <circle cx="8" cy="5" r="2" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="11" r="2" fill="currentColor" stroke="none"/>
+        </svg>
+        Muestreo — Nyquist
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════════════
+         TAB: GENERADOR DE SEÑALES
+    ══════════════════════════════════════════════ -->
+    <div id="tab-signals" class="tab-panel active">
+      <div class="page-header">
+        <div class="page-title">Generador de Señales</div>
+        <div class="page-subtitle">Visualización y análisis paramétrico de señales fundamentales en tiempo continuo y discreto</div>
+        <div class="page-tags">
+          <span class="tag tag-blue">Dominio temporal</span>
+          <span class="tag tag-green">Análisis espectral</span>
+          <span class="tag tag-gray">SciPy</span>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Parámetros de la señal</div></div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-label"><span class="control-label-text">Tipo de señal</span></div>
+              <select id="sig-type" onchange="onSigControl()">
+                <optgroup label="— Señales periódicas —">
+                  <option value="sine">Senoidal · x(t) = A·sin(2πft + φ)</option>
+                  <option value="cosine">Cosenoidal · x(t) = A·cos(2πft + φ)</option>
+                  <option value="square">Cuadrada (duty-cycle configurable)</option>
+                  <option value="sawtooth">Diente de sierra (ascendente)</option>
+                  <option value="sawtooth_inv">Diente de sierra (descendente)</option>
+                  <option value="triangle">Triangular</option>
+                </optgroup>
+                <optgroup label="— Señales no periódicas —">
+                  <option value="rectangular_pulse">Pulso rectangular</option>
+                  <option value="sinc">Función sinc · sin(πt)/πt</option>
+                  <option value="gaussian">Pulso gaussiano</option>
+                  <option value="unit_step">Escalón unitario u(t)</option>
+                  <option value="unit_impulse">Impulso (delta de Dirac)</option>
+                  <option value="ramp">Función rampa</option>
+                </optgroup>
+                <optgroup label="— Señales amortiguadas —">
+                  <option value="damped_sine">Senoidal amortiguada</option>
+                  <option value="damped_cosine">Cosenoidal amortiguada</option>
+                  <option value="complex_exp">Exponencial compleja e^(jωt)</option>
+                </optgroup>
+                <optgroup label="— Señales de barrido —">
+                  <option value="chirp">Chirp (frecuencia variable)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="section-div">Parámetros principales</div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud A</span>
+                  <span class="control-value" id="sig-A-val">1.0</span>
+                </div>
+                <input type="range" id="sig-A" min="0.1" max="5" step="0.1" value="1.0" oninput="onSigControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Frecuencia f (Hz)</span>
+                  <span class="control-value" id="sig-f-val">1.0</span>
+                </div>
+                <input type="range" id="sig-f" min="0.1" max="20" step="0.1" value="1.0" oninput="onSigControl()">
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Fase φ (°)</span>
+                  <span class="control-value" id="sig-phi-val">0°</span>
+                </div>
+                <input type="range" id="sig-phi" min="-180" max="180" step="5" value="0" oninput="onSigControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Offset DC</span>
+                  <span class="control-value" id="sig-dc-val">0.0</span>
+                </div>
+                <input type="range" id="sig-dc" min="-2" max="2" step="0.1" value="0" oninput="onSigControl()">
+              </div>
+            </div>
+
+            <div class="section-div">Parámetros de muestreo</div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Freq. muestreo (Hz)</span>
+                  <span class="control-value" id="sig-fs-val">1000</span>
+                </div>
+                <input type="range" id="sig-fs" min="100" max="5000" step="100" value="1000" oninput="onSigControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Duración (s)</span>
+                  <span class="control-value" id="sig-dur-val">2.0 s</span>
+                </div>
+                <input type="range" id="sig-dur" min="0.5" max="10" step="0.5" value="2" oninput="onSigControl()">
+              </div>
+            </div>
+
+            <div class="section-div">Parámetros avanzados</div>
+            <div class="control-row">
+              <div class="control-group" id="ctrl-decay">
+                <div class="control-label">
+                  <span class="control-label-text">Decaimiento α</span>
+                  <span class="control-value" id="sig-decay-val">0.5</span>
+                </div>
+                <input type="range" id="sig-decay" min="0.05" max="5" step="0.05" value="0.5" oninput="onSigControl()">
+              </div>
+              <div class="control-group" id="ctrl-duty">
+                <div class="control-label">
+                  <span class="control-label-text">Duty cycle D</span>
+                  <span class="control-value" id="sig-duty-val">50%</span>
+                </div>
+                <input type="range" id="sig-duty" min="5" max="95" step="5" value="50" oninput="onSigControl()">
+              </div>
+            </div>
+
+            <div class="section-div">Ruido</div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Nivel de ruido</span>
+                  <span class="control-value" id="sig-noise-val">0%</span>
+                </div>
+                <input type="range" id="sig-noise" min="0" max="100" step="5" value="0" oninput="onSigControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Tipo de ruido</span></div>
+                <select id="sig-noise-type" onchange="onSigControl()">
+                  <option value="gaussian">Gaussiano (AWGN)</option>
+                  <option value="uniform">Uniforme</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div>
+          <!-- Métricas -->
+          <div class="panel" style="margin-bottom:1rem">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Parámetros calculados</div></div>
+            <div class="panel-body">
+              <div class="metrics-grid" id="sig-metrics">
+                <div class="metric-card"><div class="metric-label">RMS</div><div class="metric-value accent" id="m-rms">—</div></div>
+                <div class="metric-card"><div class="metric-label">Pico |A|</div><div class="metric-value" id="m-peak">—</div></div>
+                <div class="metric-card"><div class="metric-label">Media</div><div class="metric-value" id="m-mean">—</div></div>
+                <div class="metric-card"><div class="metric-label">Energía</div><div class="metric-value" id="m-energy">—</div></div>
+                <div class="metric-card"><div class="metric-label">Potencia</div><div class="metric-value" id="m-power">—</div></div>
+                <div class="metric-card"><div class="metric-label">N muestras</div><div class="metric-value" id="m-N">—</div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Gráfica -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal en el tiempo — x(t)</div></div>
+            <div class="panel-body" style="position:relative">
+              <div class="chart-label-row">
+                <span id="sig-chart-label-left">x(t)</span>
+                <span id="sig-chart-label-right"></span>
+              </div>
+              <canvas id="sig-chart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Señal compleja -->
+      <div class="panel" id="complex-panel" style="display:none;margin-bottom:1rem">
+        <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Exponencial compleja — partes real e imaginaria</div></div>
+        <div class="panel-body">
+          <canvas id="sig-complex-chart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: SERIES DE FOURIER
+    ══════════════════════════════════════════════ -->
+    <div id="tab-fourier-series" class="tab-panel">
+      <div class="page-header">
+        <div class="page-title">Series de Fourier</div>
+        <div class="page-subtitle">Síntesis de señales periódicas mediante superposición de armónicos. Coeficientes analíticos exactos.</div>
+        <div class="page-tags">
+          <span class="tag tag-blue">Síntesis</span>
+          <span class="tag tag-green">Fenómeno de Gibbs</span>
+          <span class="tag tag-gray">THD</span>
+        </div>
+      </div>
+
+      <div class="eq-block">
+        <div class="eq-title">Representación matemática</div>
+        <div class="eq-row">
+          <div class="eq-item">
+            <div class="eq-name">Forma trigonométrica:</div>
+            <div class="eq-katex" id="eq-fs-trig"></div>
+          </div>
+          <div class="eq-item">
+            <div class="eq-name">Coeficientes:</div>
+            <div class="eq-katex" id="eq-fs-coeff"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Parámetros</div></div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-label"><span class="control-label-text">Señal periódica</span></div>
+              <select id="fs-shape" onchange="onFSControl()">
+                <option value="square">Onda cuadrada</option>
+                <option value="sawtooth">Diente de sierra</option>
+                <option value="triangle">Triangular</option>
+                <option value="half_rectified">Semi-onda rectificada</option>
+                <option value="full_rectified">Onda completa rectificada</option>
+              </select>
+            </div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Armónicos N</span>
+                  <span class="control-value" id="fs-N-val">10</span>
+                </div>
+                <input type="range" id="fs-N" min="1" max="50" value="10" oninput="onFSControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Frecuencia f₀ (Hz)</span>
+                  <span class="control-value" id="fs-f0-val">1.0</span>
+                </div>
+                <input type="range" id="fs-f0" min="0.5" max="10" step="0.5" value="1" oninput="onFSControl()">
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud A</span>
+                  <span class="control-value" id="fs-A-val">1.0</span>
+                </div>
+                <input type="range" id="fs-A" min="0.1" max="5" step="0.1" value="1" oninput="onFSControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Duty cycle (cuadrada)</span>
+                  <span class="control-value" id="fs-duty-val">50%</span>
+                </div>
+                <input type="range" id="fs-duty" min="10" max="90" step="5" value="50" oninput="onFSControl()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Métricas</div></div>
+          <div class="panel-body">
+            <div class="metrics-grid">
+              <div class="metric-card"><div class="metric-label">Armónicos N</div><div class="metric-value accent" id="fs-m-N">—</div></div>
+              <div class="metric-card"><div class="metric-label">Error RMS</div><div class="metric-value" id="fs-m-err">—</div></div>
+              <div class="metric-card"><div class="metric-label">THD (%)</div><div class="metric-value warn" id="fs-m-thd">—</div></div>
+              <div class="metric-card"><div class="metric-label">BW (Hz)</div><div class="metric-value" id="fs-m-bw">—</div></div>
+              <div class="metric-card"><div class="metric-label">a₀/2</div><div class="metric-value" id="fs-m-a0">—</div></div>
+              <div class="metric-card"><div class="metric-label">f_max (Hz)</div><div class="metric-value" id="fs-m-fmax">—</div></div>
+            </div>
+            <div class="info-box" id="fs-info">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Síntesis temporal — comparación</div></div>
+          <div class="panel-body">
+            <canvas id="fs-time-chart" height="200"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Espectro de amplitud |cₙ|</div></div>
+          <div class="panel-body">
+            <canvas id="fs-spectrum-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Tabla de coeficientes</div></div>
+        <div class="panel-body" style="overflow-x:auto">
+          <table class="data-table" id="fs-coeff-table">
+            <thead><tr>
+              <th>n</th>
+              <th>f_n (Hz)</th>
+              <th>aₙ (coseno)</th>
+              <th>bₙ (seno)</th>
+              <th>|cₙ| (amplitud)</th>
+              <th>∠cₙ (°)</th>
+            </tr></thead>
+            <tbody id="fs-coeff-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: DFT / FFT
+    ══════════════════════════════════════════════ -->
+    <div id="tab-dft" class="tab-panel">
+      <div class="page-header">
+        <div class="page-title">Transformada Discreta de Fourier (DFT / FFT)</div>
+        <div class="page-subtitle">Análisis espectral de señales discretas. Ventanas, fase, potencia y detección de picos.</div>
+        <div class="page-tags">
+          <span class="tag tag-blue">FFT — O(N log N)</span>
+          <span class="tag tag-green">Ventanas espectrales</span>
+          <span class="tag tag-gray">Espectro de fase</span>
+        </div>
+      </div>
+
+      <div class="eq-block">
+        <div class="eq-title">Definición</div>
+        <div class="eq-row">
+          <div class="eq-item">
+            <div class="eq-name">DFT directa:</div>
+            <div class="eq-katex" id="eq-dft-fwd"></div>
+          </div>
+          <div class="eq-item">
+            <div class="eq-name">IDFT inversa:</div>
+            <div class="eq-katex" id="eq-dft-inv"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-tabs">
+        <div class="sub-tab active" onclick="dftSub('single', this)">Señal simple</div>
+        <div class="sub-tab" onclick="dftSub('composite', this)">Señal compuesta</div>
+        <div class="sub-tab" onclick="dftSub('noise', this)">Señal + ruido</div>
+      </div>
+
+      <!-- DFT: SIMPLE -->
+      <div id="dft-single">
+        <div class="grid-2" style="margin-bottom:1rem">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal de entrada</div></div>
+            <div class="panel-body">
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Tipo</span></div>
+                <select id="dft1-type" onchange="onDFT1()">
+                  <option value="sine">Senoidal</option>
+                  <option value="cosine">Cosenoidal</option>
+                  <option value="square">Cuadrada</option>
+                  <option value="sawtooth">Diente de sierra</option>
+                  <option value="triangle">Triangular</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Frecuencia (Hz)</span>
+                    <span class="control-value" id="dft1-f-val">5</span>
+                  </div>
+                  <input type="range" id="dft1-f" min="1" max="100" value="5" oninput="onDFT1()">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Amplitud</span>
+                    <span class="control-value" id="dft1-A-val">1.0</span>
+                  </div>
+                  <input type="range" id="dft1-A" min="0.1" max="5" step="0.1" value="1" oninput="onDFT1()">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Fase (°)</span>
+                    <span class="control-value" id="dft1-phi-val">0°</span>
+                  </div>
+                  <input type="range" id="dft1-phi" min="-180" max="180" step="10" value="0" oninput="onDFT1()">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Ruido (AWGN)</span>
+                    <span class="control-value" id="dft1-noise-val">0%</span>
+                  </div>
+                  <input type="range" id="dft1-noise" min="0" max="200" step="5" value="0" oninput="onDFT1()">
+                </div>
+              </div>
+
+              <div class="section-div">Parámetros DFT</div>
+              <div class="control-row">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">N puntos</span>
+                    <span class="control-value" id="dft1-N-val">512</span>
+                  </div>
+                  <select id="dft1-N" onchange="onDFT1()">
+                    <option value="64">64</option>
+                    <option value="128">128</option>
+                    <option value="256">256</option>
+                    <option value="512" selected>512</option>
+                    <option value="1024">1024</option>
+                    <option value="2048">2048</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Freq. muestreo (Hz)</span>
+                    <span class="control-value" id="dft1-fs-val">500</span>
+                  </div>
+                  <input type="range" id="dft1-fs" min="100" max="2000" step="100" value="500" oninput="onDFT1()">
+                </div>
+              </div>
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Ventana espectral</span></div>
+                <select id="dft1-win" onchange="onDFT1()">
+                  <option value="rectangular">Rectangular (sin ventana)</option>
+                  <option value="hann">Hann</option>
+                  <option value="hamming">Hamming</option>
+                  <option value="blackman">Blackman</option>
+                  <option value="bartlett">Bartlett</option>
+                  <option value="flattop">Flat Top</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="panel" style="margin-bottom:1rem">
+              <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Métricas DFT</div></div>
+              <div class="panel-body">
+                <div class="metrics-grid" id="dft1-metrics">
+                  <div class="metric-card"><div class="metric-label">Pico freq.</div><div class="metric-value accent" id="dft1-m-peak">—</div></div>
+                  <div class="metric-card"><div class="metric-label">Res. Δf</div><div class="metric-value" id="dft1-m-df">—</div></div>
+                  <div class="metric-card"><div class="metric-label">f_Nyquist</div><div class="metric-value" id="dft1-m-ny">—</div></div>
+                  <div class="metric-card"><div class="metric-label">SNR (dB)</div><div class="metric-value green" id="dft1-m-snr">—</div></div>
+                </div>
+                <div class="info-box" id="dft1-info">—</div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal x[n]</div></div>
+              <div class="panel-body">
+                <canvas id="dft1-time" height="140"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Espectro de magnitud |X[k]|</div></div>
+            <div class="panel-body">
+              <canvas id="dft1-mag" height="180"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Espectro de fase ∠X[k] (°)</div></div>
+            <div class="panel-body">
+              <canvas id="dft1-phase" height="180"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DFT: COMPOSITE -->
+      <div id="dft-composite" style="display:none">
+        <div class="grid-3" style="margin-bottom:1rem">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Componente 1</div></div>
+            <div class="panel-body">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Frecuencia (Hz)</span>
+                  <span class="control-value" id="dftc-f1-val">5</span>
+                </div>
+                <input type="range" id="dftc-f1" min="1" max="120" value="5" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud</span>
+                  <span class="control-value" id="dftc-a1-val">1.0</span>
+                </div>
+                <input type="range" id="dftc-a1" min="0.1" max="5" step="0.1" value="1" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Fase (°)</span>
+                  <span class="control-value" id="dftc-p1-val">0°</span>
+                </div>
+                <input type="range" id="dftc-p1" min="-180" max="180" step="10" value="0" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Tipo</span></div>
+                <select id="dftc-t1" onchange="onDFTComposite()">
+                  <option value="sine">Senoidal</option><option value="cosine">Cosenoidal</option>
+                  <option value="square">Cuadrada</option><option value="sawtooth">Sierra</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Componente 2</div></div>
+            <div class="panel-body">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Frecuencia (Hz)</span>
+                  <span class="control-value" id="dftc-f2-val">15</span>
+                </div>
+                <input type="range" id="dftc-f2" min="1" max="120" value="15" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud</span>
+                  <span class="control-value" id="dftc-a2-val">0.5</span>
+                </div>
+                <input type="range" id="dftc-a2" min="0.1" max="5" step="0.1" value="0.5" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Fase (°)</span>
+                  <span class="control-value" id="dftc-p2-val">0°</span>
+                </div>
+                <input type="range" id="dftc-p2" min="-180" max="180" step="10" value="0" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Tipo</span></div>
+                <select id="dftc-t2" onchange="onDFTComposite()">
+                  <option value="sine">Senoidal</option><option value="cosine">Cosenoidal</option>
+                  <option value="square">Cuadrada</option><option value="sawtooth">Sierra</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Componente 3</div></div>
+            <div class="panel-body">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Frecuencia (Hz)</span>
+                  <span class="control-value" id="dftc-f3-val">40</span>
+                </div>
+                <input type="range" id="dftc-f3" min="1" max="120" value="40" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud</span>
+                  <span class="control-value" id="dftc-a3-val">0.3</span>
+                </div>
+                <input type="range" id="dftc-a3" min="0.1" max="5" step="0.1" value="0.3" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Fase (°)</span>
+                  <span class="control-value" id="dftc-p3-val">0°</span>
+                </div>
+                <input type="range" id="dftc-p3" min="-180" max="180" step="10" value="0" oninput="onDFTComposite()">
+              </div>
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Tipo</span></div>
+                <select id="dftc-t3" onchange="onDFTComposite()">
+                  <option value="sine">Senoidal</option><option value="cosine">Cosenoidal</option>
+                  <option value="square">Cuadrada</option><option value="sawtooth">Sierra</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal compuesta x[n]</div></div>
+            <div class="panel-body"><canvas id="dftc-time" height="170"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Espectro resultante |X[k]|</div></div>
+            <div class="panel-body"><canvas id="dftc-mag" height="170"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DFT: NOISE -->
+      <div id="dft-noise" style="display:none">
+        <div class="grid-2" style="margin-bottom:1rem">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal contaminada</div></div>
+            <div class="panel-body">
+              <div class="control-row">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Frecuencia señal (Hz)</span>
+                    <span class="control-value" id="dftn-f-val">8</span>
+                  </div>
+                  <input type="range" id="dftn-f" min="1" max="100" value="8" oninput="onDFTNoise()">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">Amplitud señal</span>
+                    <span class="control-value" id="dftn-A-val">1.0</span>
+                  </div>
+                  <input type="range" id="dftn-A" min="0.1" max="5" step="0.1" value="1" oninput="onDFTNoise()">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span class="control-label-text">SNR objetivo (dB)</span>
+                    <span class="control-value" id="dftn-snr-val">20 dB</span>
+                  </div>
+                  <input type="range" id="dftn-snr" min="-10" max="40" value="20" oninput="onDFTNoise()">
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span class="control-label-text">Ventana</span></div>
+                  <select id="dftn-win" onchange="onDFTNoise()">
+                    <option value="rectangular">Rectangular</option>
+                    <option value="hann" selected>Hann</option>
+                    <option value="hamming">Hamming</option>
+                    <option value="blackman">Blackman</option>
+                  </select>
+                </div>
+              </div>
+              <div class="info-box" id="dftn-info">—</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Métricas</div></div>
+            <div class="panel-body">
+              <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-label">Pico detectado</div><div class="metric-value accent" id="dftn-m-peak">—</div></div>
+                <div class="metric-card"><div class="metric-label">SNR (dB)</div><div class="metric-value green" id="dftn-m-snr">—</div></div>
+                <div class="metric-card"><div class="metric-label">Res. Δf</div><div class="metric-value" id="dftn-m-df">—</div></div>
+                <div class="metric-card"><div class="metric-label">N puntos</div><div class="metric-value" id="dftn-m-N">—</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal con ruido x[n]</div></div>
+            <div class="panel-body"><canvas id="dftn-time" height="160"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Espectro de potencia (dB)</div></div>
+            <div class="panel-body"><canvas id="dftn-power" height="160"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: CONVOLUCIÓN
+    ══════════════════════════════════════════════ -->
+    <div id="tab-convolution" class="tab-panel">
+      <div class="page-header">
+        <div class="page-title">Convolución Discreta</div>
+        <div class="page-subtitle">Respuesta de sistemas LTI. Animación paso a paso del deslizamiento de h[k] sobre x[n].</div>
+        <div class="page-tags">
+          <span class="tag tag-blue">Sistemas LTI</span>
+          <span class="tag tag-green">y[n] = x[n] * h[n]</span>
+          <span class="tag tag-gray">SciPy</span>
+        </div>
+      </div>
+
+      <div class="eq-block">
+        <div class="eq-title">Definición</div>
+        <div class="eq-row">
+          <div class="eq-item">
+            <div class="eq-name">Convolución discreta:</div>
+            <div class="eq-katex" id="eq-conv-disc"></div>
+          </div>
+          <div class="eq-item">
+            <div class="eq-name">Longitud de salida:</div>
+            <div class="eq-katex" id="eq-conv-len"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal de entrada x[n]</div></div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-label"><span class="control-label-text">Tipo</span></div>
+              <select id="conv-x-type" onchange="onConvControl()">
+                <option value="rectangular">Pulso rectangular</option>
+                <option value="triangular">Triangular</option>
+                <option value="exponential_decay">Exponencial decreciente</option>
+                <option value="exponential_growth">Exponencial creciente</option>
+                <option value="sine">Senoidal discreta</option>
+                <option value="cosine">Cosenoidal discreta</option>
+                <option value="unit_impulse">Impulso unitario δ[n]</option>
+                <option value="unit_step">Escalón unitario u[n]</option>
+                <option value="random">Ruido aleatorio</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Duración Nx</span>
+                  <span class="control-value" id="conv-x-dur-val">15</span>
+                </div>
+                <input type="range" id="conv-x-dur" min="3" max="40" value="15" oninput="onConvControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud</span>
+                  <span class="control-value" id="conv-x-amp-val">1.0</span>
+                </div>
+                <input type="range" id="conv-x-amp" min="0.1" max="5" step="0.1" value="1" oninput="onConvControl()">
+              </div>
+            </div>
+            <div class="control-group" id="ctrl-conv-freq">
+              <div class="control-label">
+                <span class="control-label-text">Frecuencia (ciclos)</span>
+                <span class="control-value" id="conv-x-freq-val">2.0</span>
+              </div>
+              <input type="range" id="conv-x-freq" min="0.5" max="10" step="0.5" value="2" oninput="onConvControl()">
+            </div>
+            <div class="chart-container" style="margin-top:0.5rem">
+              <canvas id="conv-x-chart" height="110"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Respuesta al impulso h[n]</div></div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-label"><span class="control-label-text">Tipo de sistema</span></div>
+              <select id="conv-h-type" onchange="onConvControl()">
+                <option value="rectangular">Filtro MA (media móvil)</option>
+                <option value="exponential_decay">Decaimiento exponencial</option>
+                <option value="gaussian">Gaussiano (filtro pasa-bajas)</option>
+                <option value="unit_impulse">Impulso unitario δ[n]</option>
+                <option value="derivative">Diferenciador (derivada)</option>
+                <option value="integrator">Integrador (acumulador)</option>
+                <option value="lowpass">Pasa-bajas (sinc)</option>
+                <option value="highpass">Pasa-altas</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Longitud Nh</span>
+                  <span class="control-value" id="conv-h-len-val">7</span>
+                </div>
+                <input type="range" id="conv-h-len" min="2" max="20" value="7" oninput="onConvControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Decaimiento α</span>
+                  <span class="control-value" id="conv-h-dec-val">0.3</span>
+                </div>
+                <input type="range" id="conv-h-dec" min="0.05" max="2" step="0.05" value="0.3" oninput="onConvControl()">
+              </div>
+            </div>
+            <div class="chart-container" style="margin-top:0.5rem">
+              <canvas id="conv-h-chart" height="110"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Resultado: y[n] = x[n] ∗ h[n]</div></div>
+        <div class="panel-body">
+          <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap; margin-bottom:0.75rem">
+            <div class="metrics-grid" style="flex:1; min-width:280px" id="conv-metrics-grid"></div>
+          </div>
+          <div class="anim-row">
+            <span class="anim-label">Paso n =</span>
+            <input type="range" id="conv-anim-n" min="0" max="50" value="0" style="flex:1" oninput="onConvAnim()">
+            <span class="control-value" id="conv-anim-val">0</span>
+            <button class="btn btn-secondary" onclick="animateConv()" id="conv-play-btn">▶ Animar</button>
+          </div>
+          <canvas id="conv-y-chart" height="180"></canvas>
+          <div class="info-box" id="conv-info">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: MUESTREO
+    ══════════════════════════════════════════════ -->
+    <div id="tab-sampling" class="tab-panel">
+      <div class="page-header">
+        <div class="page-title">Muestreo — Teorema de Nyquist-Shannon</div>
+        <div class="page-subtitle">Condición de muestreo, aliasing, y métodos de reconstrucción: sinc ideal, ZOH, lineal.</div>
+        <div class="page-tags">
+          <span class="tag tag-blue">Nyquist — f_s ≥ 2·f_max</span>
+          <span class="tag tag-blue">Aliasing</span>
+          <span class="tag tag-green">Reconstrucción sinc</span>
+        </div>
+      </div>
+
+      <div class="eq-block">
+        <div class="eq-title">Teorema de muestreo</div>
+        <div class="eq-row">
+          <div class="eq-item">
+            <div class="eq-name">Criterio de Nyquist:</div>
+            <div class="eq-katex" id="eq-samp-nyq"></div>
+          </div>
+          <div class="eq-item">
+            <div class="eq-name">Reconstrucción sinc (ideal):</div>
+            <div class="eq-katex" id="eq-samp-rec"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal y muestreo</div></div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-label"><span class="control-label-text">Tipo de señal</span></div>
+              <select id="samp-type" onchange="onSampControl()">
+                <option value="sine">Senoidal</option>
+                <option value="cosine">Cosenoidal</option>
+                <option value="square">Cuadrada</option>
+                <option value="sawtooth">Diente de sierra</option>
+                <option value="triangle">Triangular</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Frecuencia f₀ (Hz)</span>
+                  <span class="control-value" id="samp-f0-val">5.0</span>
+                </div>
+                <input type="range" id="samp-f0" min="1" max="50" step="0.5" value="5" oninput="onSampControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud</span>
+                  <span class="control-value" id="samp-A-val">1.0</span>
+                </div>
+                <input type="range" id="samp-A" min="0.1" max="3" step="0.1" value="1" oninput="onSampControl()">
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Freq. muestreo f_s (Hz)</span>
+                  <span class="control-value" id="samp-fs-val">20.0</span>
+                </div>
+                <input type="range" id="samp-fs" min="2" max="200" step="1" value="20" oninput="onSampControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Fase φ (°)</span>
+                  <span class="control-value" id="samp-phi-val">0°</span>
+                </div>
+                <input type="range" id="samp-phi" min="-180" max="180" step="10" value="0" oninput="onSampControl()">
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Duración (s)</span>
+                  <span class="control-value" id="samp-dur-val">1.0</span>
+                </div>
+                <input type="range" id="samp-dur" min="0.2" max="3" step="0.1" value="1" oninput="onSampControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label"><span class="control-label-text">Reconstrucción</span></div>
+                <select id="samp-rec" onchange="onSampControl()">
+                  <option value="sinc">Sinc ideal (interpolación perfecta)</option>
+                  <option value="zoh">ZOH (Zero-Order Hold)</option>
+                  <option value="linear">Lineal (primer orden)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="section-div">Segunda componente</div>
+            <div class="toggle-row">
+              <input type="checkbox" id="samp-add2" onchange="onSampControl()">
+              <label for="samp-add2">Agregar segunda componente</label>
+            </div>
+            <div class="control-row" id="samp-comp2-ctrls" style="opacity:0.4;pointer-events:none">
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Freq. 2 (Hz)</span>
+                  <span class="control-value" id="samp-f2-val">3.0</span>
+                </div>
+                <input type="range" id="samp-f2" min="1" max="50" step="0.5" value="3" oninput="onSampControl()">
+              </div>
+              <div class="control-group">
+                <div class="control-label">
+                  <span class="control-label-text">Amplitud 2</span>
+                  <span class="control-value" id="samp-a2-val">0.5</span>
+                </div>
+                <input type="range" id="samp-a2" min="0.1" max="3" step="0.1" value="0.5" oninput="onSampControl()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:1rem">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Análisis de Nyquist</div></div>
+            <div class="panel-body">
+              <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-label">f₀ (Hz)</div><div class="metric-value accent" id="samp-m-f0">—</div></div>
+                <div class="metric-card"><div class="metric-label">f_s (Hz)</div><div class="metric-value" id="samp-m-fs">—</div></div>
+                <div class="metric-card"><div class="metric-label">f_Nyquist</div><div class="metric-value" id="samp-m-fn">—</div></div>
+                <div class="metric-card"><div class="metric-label">f_s / f₀</div><div class="metric-value" id="samp-m-ratio">—</div></div>
+                <div class="metric-card"><div class="metric-label">N muestras</div><div class="metric-value" id="samp-m-N">—</div></div>
+                <div class="metric-card"><div class="metric-label">Error RMS</div><div class="metric-value" id="samp-m-err">—</div></div>
+              </div>
+              <div class="info-box" id="samp-status">—</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Diagrama Nyquist — comparativa</div></div>
+            <div class="panel-body">
+              <canvas id="samp-nyq-chart" height="160"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal original, muestras y reconstrucción</div></div>
+          <div class="panel-body">
+            <canvas id="samp-main-chart" height="200"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Espectro de las muestras</div></div>
+          <div class="panel-body">
+            <canvas id="samp-spec-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── SCRIPTS ─────────────────────────────────── -->
+<script src="/static/js/app.js"></script>
+<script>
+// Render KaTeX equations on load
+document.addEventListener('DOMContentLoaded', () => {
+  const eqs = {
+    'eq-fs-trig':  'f(t) = \\dfrac{a_0}{2} + \\sum_{n=1}^{N} \\left[a_n\\cos(n\\omega_0 t) + b_n\\sin(n\\omega_0 t)\\right]',
+    'eq-fs-coeff': 'a_n = \\dfrac{2}{T}\\int_0^T f(t)\\cos(n\\omega_0 t)\\,dt, \\quad b_n = \\dfrac{2}{T}\\int_0^T f(t)\\sin(n\\omega_0 t)\\,dt',
+    'eq-dft-fwd':  'X[k] = \\sum_{n=0}^{N-1} x[n]\\,e^{-j2\\pi kn/N}, \\quad k = 0,1,\\ldots,N-1',
+    'eq-dft-inv':  'x[n] = \\dfrac{1}{N}\\sum_{k=0}^{N-1} X[k]\\,e^{j2\\pi kn/N}',
+    'eq-conv-disc':'y[n] = (x * h)[n] = \\sum_{k=-\\infty}^{\\infty} x[k]\\,h[n-k]',
+    'eq-conv-len': 'L_y = L_x + L_h - 1',
+    'eq-samp-nyq': 'f_s \\geq 2f_{\\max} \\quad \\Rightarrow \\quad f_{\\text{Nyquist}} = \\dfrac{f_s}{2}',
+    'eq-samp-rec': 'x_r(t) = \\sum_{n=-\\infty}^{\\infty} x[n]\\,\\operatorname{sinc}\\!\\left(\\dfrac{t - nT_s}{T_s}\\right)',
+  };
+  for (const [id, expr] of Object.entries(eqs)) {
+    const el = document.getElementById(id);
+    if (el) katex.render(expr, el, { throwOnError: false, displayMode: false });
+  }
+  // Initial renders
+  onSigControl();
+  onFSControl();
+});
+</script>
+</body>
+</html>
