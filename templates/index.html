@@ -105,6 +105,73 @@ body {
   border-radius: 3px;
 }
 
+/* ─── GLOBAL SIGNAL CONTROLS ────────────────────── */
+.topbar-global {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  overflow-x: auto;
+  padding: 0 0.5rem;
+}
+
+.g-select {
+  background: #1A2535;
+  border: 1px solid #2D3748;
+  color: #E2E8F0;
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  outline: none;
+  cursor: pointer;
+  min-width: 130px;
+  height: 26px;
+}
+
+.g-select:focus { border-color: #60A5FA; }
+
+.g-param {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.g-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: #64748B;
+  font-style: italic;
+  min-width: 10px;
+}
+
+.g-val {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: #60A5FA;
+  min-width: 42px;
+  text-align: right;
+}
+
+.topbar-global input[type="range"] {
+  -webkit-appearance: none;
+  width: 70px;
+  height: 2px;
+  background: #2D3748;
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
+}
+.topbar-global input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #60A5FA;
+  cursor: pointer;
+  border: 1px solid #1A2535;
+}
+
 /* ─── SIDEBAR ────────────────────────────────────── */
 .sidebar {
   background: var(--bg-panel);
@@ -638,7 +705,69 @@ input[type="checkbox"] {
       Signal<span class="accent">Lab</span>
     </div>
     <div class="topbar-sep"></div>
-    <div class="topbar-sub">Procesamiento Digital de Señales</div>
+    <!-- SEÑAL GLOBAL -->
+    <div class="topbar-global">
+      <select id="g-type" onchange="onGlobalSignal()" class="g-select">
+        <optgroup label="Periódicas">
+          <option value="sine">Senoidal</option>
+          <option value="cosine">Cosenoidal</option>
+          <option value="square">Cuadrada</option>
+          <option value="sawtooth">Sierra ↗</option>
+          <option value="triangle">Triangular</option>
+        </optgroup>
+        <optgroup label="No periódicas">
+          <option value="rectangular_pulse">Pulso rect.</option>
+          <option value="sinc">Sinc</option>
+          <option value="gaussian">Gaussiana</option>
+          <option value="unit_step">Escalón u(t)</option>
+          <option value="unit_impulse">Impulso δ(t)</option>
+          <option value="ramp">Rampa</option>
+        </optgroup>
+        <optgroup label="Amortiguadas">
+          <option value="damped_sine">Sen. amortiguada</option>
+          <option value="damped_cosine">Cos. amortiguada</option>
+          <option value="complex_exp">Exp. compleja</option>
+        </optgroup>
+        <optgroup label="Barrido">
+          <option value="chirp">Chirp</option>
+        </optgroup>
+      </select>
+      <div class="g-param">
+        <span class="g-label">A</span>
+        <input type="range" id="g-A" min="0.1" max="5" step="0.1" value="1" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-A-val">1.00</span>
+      </div>
+      <div class="g-param">
+        <span class="g-label">f</span>
+        <input type="range" id="g-f" min="0.1" max="50" step="0.1" value="5" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-f-val">5.0 Hz</span>
+      </div>
+      <div class="g-param">
+        <span class="g-label">φ</span>
+        <input type="range" id="g-phi" min="-180" max="180" step="5" value="0" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-phi-val">0°</span>
+      </div>
+      <div class="g-param">
+        <span class="g-label">DC</span>
+        <input type="range" id="g-dc" min="-2" max="2" step="0.1" value="0" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-dc-val">0.00</span>
+      </div>
+      <div class="g-param" id="g-decay-grp" style="display:none">
+        <span class="g-label">α</span>
+        <input type="range" id="g-decay" min="0.05" max="5" step="0.05" value="0.5" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-decay-val">0.50</span>
+      </div>
+      <div class="g-param" id="g-duty-grp" style="display:none">
+        <span class="g-label">D</span>
+        <input type="range" id="g-duty" min="5" max="95" step="5" value="50" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-duty-val">50%</span>
+      </div>
+      <div class="g-param">
+        <span class="g-label">η</span>
+        <input type="range" id="g-noise" min="0" max="100" step="5" value="0" oninput="onGlobalSignal()">
+        <span class="g-val" id="g-noise-val">0%</span>
+      </div>
+    </div>
     <div class="topbar-right">
       <div class="topbar-badge">NumPy · SciPy · FastAPI</div>
       <div class="topbar-badge">ESCOM · IPN</div>
@@ -1126,6 +1255,10 @@ input[type="checkbox"] {
                   <option value="flattop">Flat Top</option>
                 </select>
               </div>
+              <div class="toggle-row" style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.6rem">
+                <input type="checkbox" id="dft1-bilateral" onchange="onDFT1()">
+                <label for="dft1-bilateral">Mostrar espectro <strong>bilateral</strong> (−f_Nyquist a +f_Nyquist)</label>
+              </div>
             </div>
           </div>
 
@@ -1271,6 +1404,10 @@ input[type="checkbox"] {
           </div>
         </div>
 
+        <div class="toggle-row" style="margin-bottom:0.75rem">
+          <input type="checkbox" id="dftc-bilateral" onchange="onDFTComposite()">
+          <label for="dftc-bilateral">Mostrar espectro <strong>bilateral</strong> (−f_Nyquist a +f_Nyquist)</label>
+        </div>
         <div class="grid-2">
           <div class="panel">
             <div class="panel-header"><div class="panel-title-dot"></div><div class="panel-title">Señal compuesta x[n]</div></div>

@@ -388,35 +388,46 @@ async def api_dft(params: DFTParams):
 
     x_windowed = x * w_func
     X = fft(x_windowed, n=N)
-    freqs = fftfreq(N, d=1.0/fs)
+    freqs_full = fftfreq(N, d=1.0/fs)
 
-    # Solo frecuencias positivas
+    # Espectro unilateral (frecuencias positivas)
     half = N // 2
-    freqs_pos = freqs[:half]
-    X_pos = X[:half]
-    mag = (2.0 / N) * np.abs(X_pos)
+    freqs_pos = freqs_full[:half]
+    X_pos     = X[:half]
+    mag       = (2.0 / N) * np.abs(X_pos)
     phase_deg = np.degrees(np.angle(X_pos))
-    power_db = 20 * np.log10(mag + 1e-12)
+    power_db  = 20 * np.log10(mag + 1e-12)
 
-    # Picos prominentes
+    # Espectro bilateral (fftshift: negativas a positivas centrado en 0)
+    X_shift     = fftshift(X)
+    freqs_shift = fftshift(freqs_full)
+    mag_bi      = (1.0 / N) * np.abs(X_shift)
+    phase_bi    = np.degrees(np.angle(X_shift))
+    power_db_bi = 20 * np.log10(mag_bi + 1e-12)
+
+    # Picos en espectro unilateral
     from scipy.signal import find_peaks
-    peaks, props = find_peaks(mag, height=np.max(mag)*0.05, distance=5)
+    peaks, _ = find_peaks(mag, height=np.max(mag) * 0.05, distance=5)
     peak_info = [{"freq_hz": round(freqs_pos[p], 3), "magnitude": round(mag[p], 6)} for p in peaks[:10]]
 
     snr = 0.0
     if len(peaks) > 0:
-        signal_power = mag[peaks[0]]**2
-        noise_power = np.mean(mag**2) - signal_power / N if N > 0 else 1e-9
+        signal_power = mag[peaks[0]] ** 2
+        noise_power  = np.mean(mag ** 2) - signal_power / N if N > 0 else 1e-9
         if noise_power > 0:
             snr = 10 * np.log10(signal_power / max(noise_power, 1e-12))
 
     return JSONResponse(content={
         "t": t.tolist(),
         "x": x.tolist(),
-        "freqs": freqs_pos.tolist(),
+        "freqs":     freqs_pos.tolist(),
         "magnitude": mag.tolist(),
         "phase_deg": phase_deg.tolist(),
-        "power_db": power_db.tolist(),
+        "power_db":  power_db.tolist(),
+        "freqs_bi":     freqs_shift.tolist(),
+        "magnitude_bi": mag_bi.tolist(),
+        "phase_bi":     phase_bi.tolist(),
+        "power_db_bi":  power_db_bi.tolist(),
         "peaks": peak_info,
         "metrics": {
             "N": N,
