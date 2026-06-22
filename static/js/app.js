@@ -4,6 +4,75 @@
 'use strict';
 
 // ─────────────────────────────────────────────
+//  STEM PLOT (señales discretas)
+//  Dibuja puntos + líneas verticales al eje 0
+// ─────────────────────────────────────────────
+function stemDataset(labels, values, color, alpha = 0.85) {
+  // Cada punto: un scatter + segmentos verticales via líneas
+  const pts = values.map((v, i) => ({ x: i, y: v }));
+  const segments = [];
+  values.forEach((v, i) => {
+    segments.push({ x: i, y: 0 });
+    segments.push({ x: i, y: v });
+    segments.push({ x: i, y: null }); // break
+  });
+  return [
+    // Líneas verticales (stems)
+    {
+      type: 'line',
+      data: segments,
+      borderColor: color,
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0,
+      parsing: false,
+      spanGaps: false,
+    },
+    // Puntos en la punta
+    {
+      type: 'scatter',
+      data: pts,
+      borderColor: color,
+      backgroundColor: color,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      parsing: false,
+    }
+  ];
+}
+
+function stemOpts(xLabel = 'n', yLabel = '') {
+  return {
+    animation: false,
+    responsive: true,
+    maintainAspectRatio: true,
+    interaction: { mode: 'nearest', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${parseFloat(ctx.parsed.y).toFixed(4)}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear',
+        grid: { color: '#F0F2F5' },
+        title: { display: true, text: xLabel, color: '#8E97A8', font: { size: 10 } },
+        ticks: { color: '#8E97A8', font: { size: 9 }, maxTicksLimit: 20, stepSize: 1 },
+      },
+      y: {
+        grid: { color: '#F0F2F5' },
+        title: { display: !!yLabel, text: yLabel, color: '#8E97A8', font: { size: 10 } },
+        ticks: { color: '#8E97A8', font: { size: 9 }, maxTicksLimit: 8 },
+      }
+    }
+  };
+}
+
+
+// ─────────────────────────────────────────────
 //  ESTADO GLOBAL DE SEÑAL
 //  Todo módulo lee de aquí cuando el usuario
 //  cambia el selector del topbar.
@@ -633,15 +702,13 @@ async function onConvControl(fromGlobal = false) {
     });
     CONV_DATA = d;
 
-    upsertChart('conv-x-chart', 'bar', {
-      labels: d.n_x,
-      datasets: [{ data: d.x, backgroundColor: 'rgba(26,86,196,0.7)', borderRadius: 2 }]
-    }, chartOpts('n','x[n]'));
+    upsertChart('conv-x-chart', 'scatter', {
+      datasets: stemDataset(d.n_x, d.x, 'rgba(26,86,196,0.9)')
+    }, stemOpts('n', 'x[n]'));
 
-    upsertChart('conv-h-chart', 'bar', {
-      labels: d.n_h,
-      datasets: [{ data: d.h, backgroundColor: 'rgba(14,124,90,0.7)', borderRadius: 2 }]
-    }, chartOpts('k','h[k]'));
+    upsertChart('conv-h-chart', 'scatter', {
+      datasets: stemDataset(d.n_h, d.h, 'rgba(14,124,90,0.9)')
+    }, stemOpts('k', 'h[k]'));
 
     const m = d.metrics;
     document.getElementById('conv-metrics-grid').innerHTML = `
@@ -663,11 +730,31 @@ async function onConvControl(fromGlobal = false) {
 function renderConvResult(step) {
   if (!CONV_DATA) return;
   setVal('conv-anim-val', step);
-  const colors = CONV_DATA.y.map((_,i) => i <= step ? 'rgba(26,86,196,0.75)' : 'rgba(222,226,232,0.6)');
-  upsertChart('conv-y-chart', 'bar', {
-    labels: CONV_DATA.n_y,
-    datasets: [{ data: CONV_DATA.y, backgroundColor: colors, borderRadius: 2 }]
-  }, chartOpts('n','y[n]'));
+  // Split into computed (blue) and pending (gray) stems
+  const computed = CONV_DATA.y.map((v, i) => i <= step ? v : null);
+  const pending  = CONV_DATA.y.map((v, i) => i >  step ? v : null);
+
+  function stemSplit(values, color) {
+    const segs = [];
+    values.forEach((v, i) => {
+      if (v === null) return;
+      segs.push({ x: i, y: 0 });
+      segs.push({ x: i, y: v });
+      segs.push({ x: i, y: null });
+    });
+    const pts = values.map((v, i) => v !== null ? { x: i, y: v } : null).filter(Boolean);
+    return [
+      { type: 'line',    data: segs, borderColor: color, borderWidth: 1.5, pointRadius: 0, tension: 0, parsing: false, spanGaps: false },
+      { type: 'scatter', data: pts,  borderColor: color, backgroundColor: color, pointRadius: 4, parsing: false }
+    ];
+  }
+
+  upsertChart('conv-y-chart', 'scatter', {
+    datasets: [
+      ...stemSplit(computed, 'rgba(26,86,196,0.9)'),
+      ...stemSplit(pending,  'rgba(180,190,210,0.5)'),
+    ]
+  }, stemOpts('n', 'y[n] = x[n] * h[n]'));
 }
 function onConvAnim() { renderConvResult(parseInt(document.getElementById('conv-anim-n').value)); }
 
