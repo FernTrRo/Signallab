@@ -1,41 +1,17 @@
-// ═══════════════════════════════════════════════════════════════
-//  SignalLab — app.js
-// ═══════════════════════════════════════════════════════════════
+
 'use strict';
 
-// ─────────────────────────────────────────────
-//  STEM PLOT (señales discretas)
-//  Dibuja puntos + líneas verticales al eje 0
-// ─────────────────────────────────────────────
+
 function stemDataset(labels, values, color, alpha = 0.85) {
-  // Cada punto: un scatter + segmentos verticales via líneas
   const pts = values.map((v, i) => ({ x: i, y: v }));
-  const segments = [];
-  values.forEach((v, i) => {
-    segments.push({ x: i, y: 0 });
-    segments.push({ x: i, y: v });
-    segments.push({ x: i, y: null }); // break
-  });
   return [
-    // Líneas verticales (stems)
-    {
-      type: 'line',
-      data: segments,
-      borderColor: color,
-      borderWidth: 1.5,
-      pointRadius: 0,
-      tension: 0,
-      parsing: false,
-      spanGaps: false,
-    },
-    // Puntos en la punta
     {
       type: 'scatter',
       data: pts,
       borderColor: color,
       backgroundColor: color,
-      pointRadius: 4,
-      pointHoverRadius: 6,
+      pointRadius: 5,
+      pointHoverRadius: 7,
       parsing: false,
     }
   ];
@@ -132,10 +108,15 @@ function chartOpts(xLabel = 'n', yLabel = '', opts = {}) {
 
 function upsertChart(id, type, data, opts) {
   if (CHARTS[id]) {
-    CHARTS[id].data    = data;
-    if (opts) CHARTS[id].options = opts;
-    CHARTS[id].update('none');
-    return CHARTS[id];
+    if (CHARTS[id].config.type !== type) {
+      CHARTS[id].destroy();
+      delete CHARTS[id];
+    } else {
+      CHARTS[id].data    = data;
+      if (opts) CHARTS[id].options = opts;
+      CHARTS[id].update('none');
+      return CHARTS[id];
+    }
   }
   CHARTS[id] = new Chart(document.getElementById(id).getContext('2d'),
     { type, data, options: opts || chartOpts() });
@@ -735,17 +716,12 @@ function renderConvResult(step) {
   const pending  = CONV_DATA.y.map((v, i) => i >  step ? v : null);
 
   function stemSplit(values, color) {
-    const segs = [];
-    values.forEach((v, i) => {
-      if (v === null) return;
-      segs.push({ x: i, y: 0 });
-      segs.push({ x: i, y: v });
-      segs.push({ x: i, y: null });
-    });
-    const pts = values.map((v, i) => v !== null ? { x: i, y: v } : null).filter(Boolean);
+    const pts = values
+      .map((v, i) => v !== null ? { x: i, y: v } : null)
+      .filter(Boolean);
     return [
-      { type: 'line',    data: segs, borderColor: color, borderWidth: 1.5, pointRadius: 0, tension: 0, parsing: false, spanGaps: false },
-      { type: 'scatter', data: pts,  borderColor: color, backgroundColor: color, pointRadius: 4, parsing: false }
+      { type: 'scatter', data: pts, borderColor: color,
+        backgroundColor: color, pointRadius: 5, parsing: false }
     ];
   }
 
