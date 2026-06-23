@@ -17,7 +17,7 @@ function stemDataset(labels, values, color, alpha = 0.85) {
   ];
 }
 
-function stemOpts(xLabel = 'n', yLabel = '') {
+function stemOpts(xLabel = 'n', yLabel = '', maxN = 50) {
   return {
     animation: false,
     responsive: true,
@@ -27,7 +27,8 @@ function stemOpts(xLabel = 'n', yLabel = '') {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: ctx => ` ${parseFloat(ctx.parsed.y).toFixed(4)}`
+          title: ctx => `n = ${ctx[0].parsed.x}`,
+          label: ctx => ` valor = ${parseFloat(ctx.parsed.y).toFixed(4)}`
         }
       }
     },
@@ -36,17 +37,22 @@ function stemOpts(xLabel = 'n', yLabel = '') {
         type: 'linear',
         grid: { color: '#F0F2F5' },
         title: { display: true, text: xLabel, color: '#8E97A8', font: { size: 10 } },
-        ticks: { color: '#8E97A8', font: { size: 9 }, maxTicksLimit: 20, stepSize: 1 },
+        ticks: {
+          color: '#8E97A8',
+          font: { size: 9 },
+          stepSize: 1,
+          maxTicksLimit: maxN + 1,
+          callback: val => Number.isInteger(val) ? val : ''
+        },
       },
       y: {
         grid: { color: '#F0F2F5' },
         title: { display: !!yLabel, text: yLabel, color: '#8E97A8', font: { size: 10 } },
-        ticks: { color: '#8E97A8', font: { size: 9 }, maxTicksLimit: 8 },
+        ticks: { color: '#8E97A8', font: { size: 9 }, maxTicksLimit: 6 },
       }
     }
   };
 }
-
 
 // ─────────────────────────────────────────────
 //  ESTADO GLOBAL DE SEÑAL
@@ -711,27 +717,60 @@ async function onConvControl(fromGlobal = false) {
 function renderConvResult(step) {
   if (!CONV_DATA) return;
   setVal('conv-anim-val', step);
-  // Split into computed (blue) and pending (gray) stems
-  const computed = CONV_DATA.y.map((v, i) => i <= step ? v : null);
-  const pending  = CONV_DATA.y.map((v, i) => i >  step ? v : null);
 
-  function stemSplit(values, color) {
-    const pts = values
-      .map((v, i) => v !== null ? { x: i, y: v } : null)
-      .filter(Boolean);
-    return [
-      { type: 'scatter', data: pts, borderColor: color,
-        backgroundColor: color, pointRadius: 5, parsing: false }
-    ];
+  // Mostrar n actual encima del slider
+  const infoEl = document.getElementById('conv-step-info');
+  if (infoEl) {
+    const xVal = step < CONV_DATA.x.length ? CONV_DATA.x[step] : 0;
+    const hVal = step < CONV_DATA.h.length ? CONV_DATA.h[step] : 0;
+    const yVal = CONV_DATA.y[step];
+    infoEl.textContent =
+      `n = ${step}  |  x[${step}] = ${xVal.toFixed(4)}  |  h[${step}] = ${hVal.toFixed(4)}  |  y[${step}] = ${yVal !== undefined ? yVal.toFixed(4) : '—'}`;
   }
+
+  // x[n] — resalta la muestra actual
+  const xColors = CONV_DATA.x.map((_, i) =>
+    i === step ? '#FF6B35' : 'rgba(26,86,196,0.9)');
+  const xSizes  = CONV_DATA.x.map((_, i) => i === step ? 8 : 5);
+  upsertChart('conv-x-chart', 'scatter', {
+    datasets: [{
+      data: CONV_DATA.x.map((v, i) => ({ x: i, y: v })),
+      borderColor: xColors,
+      backgroundColor: xColors,
+      pointRadius: xSizes,
+      parsing: false,
+    }]
+  }, stemOpts('n', 'x[n]', CONV_DATA.x.length));
+
+  // h[n] — resalta la muestra actual
+  const hColors = CONV_DATA.h.map((_, i) =>
+    i === step ? '#FF6B35' : 'rgba(14,124,90,0.9)');
+  const hSizes  = CONV_DATA.h.map((_, i) => i === step ? 8 : 5);
+  upsertChart('conv-h-chart', 'scatter', {
+    datasets: [{
+      data: CONV_DATA.h.map((v, i) => ({ x: i, y: v })),
+      borderColor: hColors,
+      backgroundColor: hColors,
+      pointRadius: hSizes,
+      parsing: false,
+    }]
+  }, stemOpts('k', 'h[k]', CONV_DATA.h.length));
+
+  // y[n] — acumula hasta el paso actual
+  const computed = CONV_DATA.y.map((v, i) => i <= step ? { x: i, y: v } : null).filter(Boolean);
+  const pending  = CONV_DATA.y.map((v, i) => i >  step ? { x: i, y: v } : null).filter(Boolean);
+  const current  = CONV_DATA.y[step] !== undefined ? [{ x: step, y: CONV_DATA.y[step] }] : [];
 
   upsertChart('conv-y-chart', 'scatter', {
     datasets: [
-      ...stemSplit(computed, 'rgba(26,86,196,0.9)'),
-      ...stemSplit(pending,  'rgba(180,190,210,0.5)'),
+      { data: computed, borderColor: 'rgba(26,86,196,0.9)',  backgroundColor: 'rgba(26,86,196,0.9)',  pointRadius: 5, parsing: false },
+      { data: pending,  borderColor: 'rgba(180,190,210,0.4)', backgroundColor: 'rgba(180,190,210,0.4)', pointRadius: 4, parsing: false },
+      { data: current,  borderColor: '#FF6B35',              backgroundColor: '#FF6B35',              pointRadius: 9, parsing: false },
     ]
-  }, stemOpts('n', 'y[n] = x[n] * h[n]'));
+  }, stemOpts('n', 'y[n] = x[n] * h[n]', CONV_DATA.y.length));
 }
+
+
 function onConvAnim() { renderConvResult(parseInt(document.getElementById('conv-anim-n').value)); }
 
 let convAnimTimer = null;
