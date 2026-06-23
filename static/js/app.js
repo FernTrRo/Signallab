@@ -679,8 +679,12 @@ async function onConvControl(fromGlobal = false) {
   setVal('conv-h-len-val',  hLen);
   setVal('conv-h-dec-val',  fmt(hDec,2));
 
-  document.getElementById('ctrl-conv-freq').style.opacity =
+    document.getElementById('ctrl-conv-freq').style.opacity =
     ['sine','cosine'].includes(xType) ? '1' : '0.35';
+    document.getElementById('conv-h-dec').parentElement.style.opacity =
+    ['exponential_decay'].includes(hType) ? '1' : '0.35';
+    document.getElementById('conv-h-dec').parentElement.style.pointerEvents =
+    ['exponential_decay'].includes(hType) ? 'auto' : 'none';
 
   try {
     const d = await apiPost('/api/convolution', {
